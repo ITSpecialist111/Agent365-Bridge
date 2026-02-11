@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+*.tsbuildinfo
+*.tgz
+
+# Secrets & Local Config
+.env
+.mcp.json
+
+# Logs & Dumps (Tenant Sensitive)
+test_output.log
+test_e2e_output.log
+tool_schemas.json
