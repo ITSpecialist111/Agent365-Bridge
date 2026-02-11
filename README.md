@@ -96,6 +96,7 @@ From the app registration **Overview** page, copy these two values:
 | `McpServers.Calendar.All` | Calendar MCP Server |
 | `McpServers.CopilotMCP.All` | Copilot MCP Server |
 | `McpServers.DASearch.All` | M365 Copilot Agent Directory |
+| `McpServers.Dataverse.All` | Dataverse MCP Server |
 | `McpServers.Excel.All` | Excel MCP Server |
 | `McpServers.Files.All` | ODSP Files Tool MCP Server |
 | `McpServers.Knowledge.All` | Knowledge MCP Server |
@@ -207,6 +208,41 @@ Open Claude Code — Agent 365 tools will appear automatically. Try:
 
 ---
 
+---
+
+## Universal MCP Support (Claude Desktop & Others)
+
+This bridge complies with the **Model Context Protocol (MCP)** specification, meaning it can be used with **any** MCP-compatible client, not just Claude Code CLI.
+
+### adding to Claude Desktop (Windows/Mac)
+
+To use Agent 365 tools inside the Claude Desktop app:
+
+1. Open your config file:
+   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+   - **Mac**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+2. Add the bridge configuration:
+
+```json
+{
+  "mcpServers": {
+    "agent365-bridge": {
+      "command": "node",
+      "args": [
+        "C:/path/to/your/Agent365/dist/index.js"
+      ]
+    }
+  }
+}
+```
+
+> **Note**: Update the path to match where you cloned this repository.
+
+3. Restart Claude Desktop. The tools will appear in the 🔌 menu.
+
+---
+
 ## Available MCP Servers
 
 The bridge connects to all 13 Agent 365 MCP servers:
@@ -226,6 +262,7 @@ The bridge connects to all 13 Agent 365 MCP servers:
 | **User Profile** | `McpServers.Me.All` | Profile, manager, direct reports, user search |
 | **Files** | `McpServers.Files.All` | ODSP Files tool operations |
 | **Agent Directory** | `McpServers.DASearch.All` | Copilot Agent Directory search |
+| **Dataverse** | `McpServers.Dataverse.All` | CRUD operations, FetchXML, and Web API for Dataverse |
 | **Files** | `McpServers.Files.All` | ODSP Files tool operations |
 
 ---
@@ -331,3 +368,7 @@ For the best experience, we recommend running both servers side-by-side in Claud
 - [Agent 365 Samples](https://github.com/microsoft/Agent365-samples)
 - [MCP Server Reference](https://learn.microsoft.com/en-us/microsoft-agent-365/mcp-server-reference/)
 - [Frontier Preview Program](https://adoption.microsoft.com/copilot/frontier-program/)
+
+## Disclaimer
+
+**Authentication & Liability**: This project is an open-source bridge and is not an official Microsoft product. It uses your own Azure AD App Registration and operates under the context of the signed-in user. You are responsible for managing the security of your client secrets and tokens. The maintainers of this repository accept no liability for any data loss, security breaches, or unexpected charges incurred by using this software. Use at your own risk.
