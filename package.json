@@ -8,22 +8,25 @@
     "dev": "ts-node src/index.ts",
     "start": "node dist/index.js",
     "setup": "ts-node scripts/setup.ts",
+    "login": "ts-node scripts/login.ts",
+    "logout": "ts-node scripts/logout.ts",
     "register": "ts-node scripts/register-claude.ts",
     "mock": "ts-node scripts/start-mock.ts",
     "test:e2e": "ts-node scripts/test-e2e.ts",
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.2",
     "@azure/identity": "^4.12.1",
+    "@azure/identity-cache-persistence": "^1.2.0",
+    "@modelcontextprotocol/sdk": "^1.25.2",
     "dotenv": "^16.4.5",
     "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
-    "typescript": "^5.6.0",
-    "ts-node": "^10.9.2",
-    "@types/node": "^22.0.0",
     "@types/jsonwebtoken": "^9.0.0",
-    "rimraf": "^6.0.0"
+    "@types/node": "^22.0.0",
+    "rimraf": "^6.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.0"
   }
 }

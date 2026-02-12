@@ -17,7 +17,7 @@ async function main(): Promise<void> {
   log(`Platform endpoint: ${config.mcpPlatformEndpoint}`);
   log(`Manifest servers: ${config.manifest.mcpServers.length}`);
 
-  // Step 2: Initialize token provider
+  // Step 2: Initialize token provider (loads cached auth record if available)
   const tokenProvider = new TokenProvider(config);
   if (tokenProvider.isMockMode()) {
     log("Running in mock mode (no authentication required)");
@@ -27,57 +27,45 @@ async function main(): Promise<void> {
     log(
       "Warning: No authentication configured. Set BEARER_TOKEN or Azure credentials in .env"
     );
-    log("Continuing anyway — tool discovery may fail against production servers");
   }
 
-  // Step 3: Discover MCP servers and their tools
-  log("Discovering Agent 365 MCP servers...");
-  const discovery = new ServerDiscovery(config, tokenProvider);
+  // Step 3: Start the MCP server with a discovery callback.
+  //
+  // The server starts immediately (responds to `initialize` right away).
+  // Discovery runs in the background and `tools/list` blocks until it
+  // completes (up to 30 seconds). With cached auth tokens, discovery
+  // finishes in ~10 seconds and Claude gets the full 56 tools.
+  const proxy = new McpProxyServer(null, [], async () => {
+    log("Discovering Agent 365 MCP servers...");
+    const discovery = new ServerDiscovery(config, tokenProvider);
+    const servers = await discovery.discoverAll();
 
-  let resolvedServers;
-  try {
-    resolvedServers = await discovery.discoverAll();
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    log(`Server discovery failed: ${message}`);
-    log(
-      "Hint: If using the mock server, ensure it is running (a365 develop start-mock-tooling-server)"
+    if (servers.length === 0) {
+      log(
+        "No MCP servers discovered. Check ToolingManifest.json or gateway access."
+      );
+    }
+
+    const totalTools = servers.reduce(
+      (sum, s) => sum + s.tools.length,
+      0
     );
-    log(
-      "Hint: If using production, verify your .env credentials and Frontier preview access"
-    );
-    process.exit(1);
-  }
+    log(`Discovered ${totalTools} tools across ${servers.length} servers:`);
+    for (const server of servers) {
+      log(
+        `  ${server.config.mcpServerName}: ${server.tools.map((t) => t.name).join(", ")}`
+      );
+    }
 
-  if (resolvedServers.length === 0) {
-    log("No MCP servers discovered. Check ToolingManifest.json or gateway access.");
-    log("Starting with empty tool set — Claude Code will have no Agent 365 tools.");
-  }
+    const forwarder = new ToolForwarder(config, tokenProvider, servers);
+    return { forwarder, servers };
+  });
 
-  const totalTools = resolvedServers.reduce(
-    (sum, s) => sum + s.tools.length,
-    0
-  );
-  log(
-    `Discovered ${totalTools} tools across ${resolvedServers.length} servers:`
-  );
-  for (const server of resolvedServers) {
-    log(
-      `  ${server.config.mcpServerName}: ${server.tools.map((t) => t.name).join(", ")}`
-    );
-  }
-
-  // Step 4: Create tool forwarder
-  const forwarder = new ToolForwarder(config, tokenProvider, resolvedServers);
-
-  // Step 5: Start MCP proxy server on stdio
-  const proxy = new McpProxyServer(forwarder, resolvedServers);
   await proxy.start();
 
   // Handle graceful shutdown
   const cleanup = async () => {
     log("Shutting down...");
-    await forwarder.closeAll();
     process.exit(0);
   };
 

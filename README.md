@@ -142,26 +142,33 @@ NODE_ENV=development
 
 ---
 
-### Step 4: First Run — Device Code Sign-In
+### Step 4: Sign In (One-Time)
 
-Start the bridge:
+Sign in to Microsoft 365 and cache your credentials:
 
 ```bash
-node dist/index.js
+npm run login
 ```
 
-On first run, you'll be prompted to sign in via your browser:
+You'll be prompted to visit a URL, then tools will be discovered and cached:
 
 ```
-[agent365-bridge] Starting Agent 365 MCP Bridge for Claude Code...
-[agent365-bridge] Using Device Code credential (Delegated permissions)
-[agent365-bridge] Authentication configured
-[agent365-bridge] Discovering Agent 365 MCP servers...
-[agent365-bridge] ========================================
+Agent 365 Bridge — Sign In & Setup
+
+Step 1: Sign in to Microsoft 365
 [agent365-bridge] SIGN IN REQUIRED
 [agent365-bridge] Go to: https://microsoft.com/devicelogin
 [agent365-bridge] Enter code: XXXXXXXX
-[agent365-bridge] ========================================
+
+✅ Authentication successful!
+   Credentials cached at: ~/.agent365-bridge/auth-record.json
+
+Step 2: Discovering Agent 365 MCP servers...
+
+✅ Discovered 56 tools across 14 servers
+
+🎉 Setup complete!
+   Claude Desktop will now load all tools instantly.
 ```
 
 **To complete sign-in:**
@@ -169,27 +176,34 @@ On first run, you'll be prompted to sign in via your browser:
 1. Open [https://microsoft.com/devicelogin](https://microsoft.com/devicelogin) in your browser
 2. Enter the code shown in the terminal
 3. Sign in with your **Microsoft 365 account**
+4. Wait for tool discovery to complete (~20 seconds)
 
-Once authenticated, the bridge discovers all available MCP tools:
-
-```
-[agent365-bridge] Discovered 20 tools from mcp_MailTools
-[agent365-bridge]   mcp_ExcelServer: CreateWorkbook...
-[agent365-bridge]   ... retrieve_federated_knowledge
-[agent365-bridge] MCP proxy server started on stdio
-```
-
-> **Note:** Each new process start requires a fresh device code sign-in. Tokens are cached in memory for the duration of the session.
+> **Note:** This only needs to be done once. Both credentials and the tool list are cached to disk. Tokens refresh automatically on subsequent launches. Run `npm run logout` to clear cached credentials.
 
 ---
 
-### Step 5: Register with Claude Code
+### Step 5: Register with Claude Code / Claude Desktop
+
+For **Claude Code** (CLI):
 
 ```bash
 npm run register
 ```
 
 This registers the bridge as a global MCP server in Claude Code. After this, Agent 365 tools are available in **any** Claude Code session.
+
+For **Claude Desktop**, add the bridge to your config file (`%APPDATA%\Claude\claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "agent365-bridge": {
+      "command": "node",
+      "args": ["C:/path/to/your/Agent365/dist/index.js"]
+    }
+  }
+}
+```
 
 ---
 
@@ -345,6 +359,8 @@ For the best experience, we recommend running both servers side-by-side in Claud
 | `npm run dev` | Run with ts-node (development) |
 | `npm run start` | Run compiled output |
 | `npm run setup` | Interactive setup wizard |
+| `npm run login` | Sign in to M365 and cache credentials (one-time) |
+| `npm run logout` | Clear cached credentials |
 | `npm run register` | Register bridge with Claude Code CLI |
 | `npm run mock` | Start mock server + register |
 | `npm run clean` | Remove `dist/` directory |
@@ -359,6 +375,8 @@ For the best experience, we recommend running both servers side-by-side in Claud
 | `AADSTS7000218: request body must contain client_assertion` | Public client flows not enabled | Set "Allow public client flows" to Yes in Authentication settings |
 | `Scope doesn't exist on the resource` | Manifest scope names don't match Azure API | Update `ToolingManifest.json` scope names or use `/.default` |
 | `No authentication configured` | Missing credentials in `.env` | Add `AZURE_TENANT_ID` and `AZURE_CLIENT_ID` to `.env` |
+| Tools don't appear in Claude Desktop | Token not cached / timeout | Run `npm run login` first, then restart Claude Desktop |
+| `Request timed out` in MCP logs | Device code sign-in took too long | Run `npm run login` in terminal first for one-time setup |
 
 ## References
 

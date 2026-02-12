@@ -77,6 +77,12 @@
       "mcpServerUniqueName": "mcp_DASearchTools",
       "scope": "McpServers.DASearch.All",
       "audience": "ea9ffc3e-8a23-4a7d-836d-234d7c7565c1"
+    },
+    {
+      "mcpServerName": "mcp_DataverseTools",
+      "mcpServerUniqueName": "mcp_DataverseTools",
+      "scope": "McpServers.Dataverse.All",
+      "audience": "ea9ffc3e-8a23-4a7d-836d-234d7c7565c1"
     }
   ]
 }
