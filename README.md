@@ -14,6 +14,37 @@ Connect **Claude Code** to **Microsoft Agent 365 MCP servers** — giving Claude
 
 The bridge runs as a **local stdio MCP server** that Claude Code connects to. When Claude calls a tool (e.g. `createMessage`, `getEvents`), the bridge authenticates with Azure Entra ID using **delegated permissions** and forwards the call to the appropriate Agent 365 MCP server — acting on behalf of the signed-in user.
 
+### Two-Layer Disk Caching
+
+Claude Desktop enforces a **5-second timeout** on `tools/list` requests. Since discovering 14 Agent 365 servers takes ~20 seconds, the bridge uses a two-layer caching strategy to serve tools instantly:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Login as npm run login
+    participant Disk as ~/.agent365-bridge/
+    participant Bridge as Bridge Process
+    participant Claude as Claude Desktop
+
+    Note over User,Login: One-time setup
+    User->>Login: npm run login
+    Login->>Login: Device code auth
+    Login->>Disk: auth-record.json
+    Login->>Login: Discover 14 servers (56 tools)
+    Login->>Disk: tools-cache.json
+
+    Note over Bridge,Claude: Every subsequent launch
+    Claude->>Bridge: initialize
+    Bridge->>Disk: Load tools-cache.json
+    Bridge-->>Claude: initialize response
+    Claude->>Bridge: tools/list
+    Bridge-->>Claude: 56 tools (instant, <1ms)
+    Note over Bridge: Discovery runs in background (~20s)
+    Claude->>Bridge: tools/call SearchMessages
+    Note over Bridge: Waits for live discovery if needed
+    Bridge-->>Claude: Email results
+```
+
 ## Why this project exists?
 
 While Microsoft provides a rich set of tools for building and managing AI agents, there is currently a "protocol gap" for 3rd-party coding agents like Claude Code:
