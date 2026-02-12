@@ -45,6 +45,12 @@ sequenceDiagram
     Bridge-->>Claude: Email results
 ```
 
+### Compatibility Layer
+
+The bridge automatically fixes common MCP compatibility issues:
+1. **Schema Sanitization**: Strips `oneOf`, `allOf`, and `anyOf` from tool schemas (which Anthropic API rejects), merging properties where possible.
+2. **Name Deduplication**: Detects tools with identical names across different servers (e.g. `GetDocumentContent` in both Word and Excel) and automatically namespaces them (e.g. `GetDocumentContent_Word`) to prevent collisions.
+
 ## Why this project exists?
 
 While Microsoft provides a rich set of tools for building and managing AI agents, there is currently a "protocol gap" for 3rd-party coding agents like Claude Code:
