@@ -42,11 +42,20 @@ export class ToolForwarder {
    * @param args - The tool call arguments
    * @returns The tool call result
    */
+  /**
+   * Forwards a tool call to the owning Agent 365 MCP server.
+   *
+   * @param toolName - The tool name to call
+   * @param args - The tool call arguments
+   * @param targetServer - Optional: specific server to target (bypassing name lookup)
+   * @returns The tool call result
+   */
   async callTool(
     toolName: string,
-    args: Record<string, unknown>
+    args: Record<string, unknown>,
+    targetServer?: ResolvedServer
   ): Promise<{ content: Array<{ type: string; text: string }> }> {
-    const server = this.toolServerMap.get(toolName);
+    const server = targetServer ?? this.toolServerMap.get(toolName);
     if (!server) {
       return {
         content: [
