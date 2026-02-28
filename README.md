@@ -111,7 +111,13 @@ From the app registration **Overview** page, copy these two values:
 | **Directory (tenant) ID** | Overview page, top section | `AZURE_TENANT_ID` |
 | **Application (client) ID** | Overview page, top section | `AZURE_CLIENT_ID` |
 
-#### 2c. Create a client secret
+#### 2c. Create a client secret _(optional — server deployment only)_
+
+> **Note:** If you're only using Claude Code / Claude Desktop with the default **Device Code** sign-in flow, you can **skip this step entirely**. The Device Code flow is a public client flow and does not require a client secret.
+>
+> A client secret is only needed if you plan to:
+> - Deploy the bridge as an **HTTP server** with On-Behalf-Of (OBO) auth (`AUTH_MODE=obo`)
+> - Use **Application permissions** with Client Credentials (`AUTH_MODE=client_credentials`)
 
 1. Go to **Certificates & secrets** (left sidebar)
 2. Click **New client secret**
@@ -167,7 +173,10 @@ Create a `.env` file in the project root with your credentials:
 # Azure Entra ID Authentication
 AZURE_TENANT_ID=your-directory-tenant-id
 AZURE_CLIENT_ID=your-application-client-id
-AZURE_CLIENT_SECRET=your-client-secret-value
+
+# Client secret — only needed for OBO (server) or client_credentials mode.
+# For the default Device Code flow (Claude Code / Claude Desktop), leave this blank or omit it.
+# AZURE_CLIENT_SECRET=your-client-secret-value
 
 # Agent 365 Configuration
 MCP_PLATFORM_ENDPOINT=https://agent365.svc.cloud.microsoft
@@ -326,7 +335,7 @@ While this bridge connects Claude to the core Agent 365 infrastructure for **act
 | :--- | :--- | :--- |
 | **Primary Goal** | **Action & Automation**: Send mail, create docs, update calendar. | **Context & Intelligence**: "Summarize my meetings regarding X", "What did Sarah say?" |
 | **Data Scope** | 13+ Granular M365 Services (Word, Excel, Teams, etc.) | Federated search across Mail, Teams, and SharePoint. |
-| **Authentication** | Custom App Registration (Client Secret / Device Code). | Microsoft-managed App (requires one-time Tenant Admin consent). |
+| **Authentication** | Custom App Registration (Device Code by default — no client secret needed). | Microsoft-managed App (requires one-time Tenant Admin consent). |
 | **Setup Mode** | Local Proxy to Remote HTTP Gateway. | Native Local stdio Server. |
 
 ### Using Both Together
@@ -354,12 +363,13 @@ For the best experience, we recommend running both servers side-by-side in Claud
 
 ## Authentication Modes
 
-| Mode | When to use | Config |
-|------|-------------|--------|
-| **Device Code** (default) | Production with Delegated permissions | Set `AZURE_TENANT_ID` + `AZURE_CLIENT_ID` |
-| **Client Credentials** | Application-type permissions | Add `AUTH_MODE=client_credentials` to `.env` |
-| **Bearer Token** | Testing with a pre-acquired token | Set `BEARER_TOKEN` in `.env` |
-| **Mock** | Local development without Azure | Endpoint set to `localhost` |
+| Mode | When to use | Config | Client Secret? |
+|------|-------------|--------|----------------|
+| **Device Code** (default) | Claude Code / Desktop with Delegated permissions | Set `AZURE_TENANT_ID` + `AZURE_CLIENT_ID` | **No** — public client flow |
+| **Client Credentials** | Application-type permissions (headless) | Add `AUTH_MODE=client_credentials` + `AZURE_CLIENT_SECRET` | **Yes** |
+| **OBO (On-Behalf-Of)** | HTTP server deployment (Copilot Studio) | Add `AUTH_MODE=obo` + `AZURE_CLIENT_SECRET` | **Yes** |
+| **Bearer Token** | Testing with a pre-acquired token | Set `BEARER_TOKEN` in `.env` | No |
+| **Mock** | Local development without Azure | Endpoint set to `localhost` | No |
 
 ## Project Structure
 
